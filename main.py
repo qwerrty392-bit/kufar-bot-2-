@@ -14,22 +14,17 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 # ============================================================
 # --- ВАШ TELEGRAM ID ---
 # ============================================================
-MY_TELEGRAM_ID = 545995986        # <-- Ваш основной ID
-# ============================================================
+MY_TELEGRAM_ID = 545995986
 
 # --- КОНФИГУРАЦИЯ ---
 BOT_TOKEN = "8894348395:AAFrvb4tFvqM129UcaxrIE_j8icV93sGgmM"
 RENDER_EXTERNAL_URL = os.environ.get("RENDER_EXTERNAL_URL", "https://kufar-bot-2.onrender.com")
 
-# ============================================================
-# --- КАТЕГОРИЯ АВТОМОБИЛЕЙ ---
-# ============================================================
-CAR_CATEGORY = "2010"  # Категория "Автомобили"
+CAR_CATEGORY = "2010"
+MAX_PRICE_BYN = 17050
+MIN_PRICE_BYN = 100
 
-MAX_PRICE_BYN = 17050    # Максимальная цена
-MIN_PRICE_BYN = 100      # Минимальная цена (отсеиваем мусор)
-
-CHECK_INTERVAL = 300       # 5 минут
+CHECK_INTERVAL = 300
 USERS_FILE = "subscribers.json"
 SEEN_ADS_FILE = "seen_ads.json"
 START_TIME_FILE = "start_time.json"
@@ -37,7 +32,6 @@ START_TIME_FILE = "start_time.json"
 bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# --- 1. ХРАНИЛИЩЕ ДАННЫХ ---
 def load_data(filename, default):
     if os.path.exists(filename):
         try:
@@ -67,7 +61,6 @@ def set_start_time():
     save_data(START_TIME_FILE, {"time": int(time.time())})
     logging.info(f"Время /start обновлено: {int(time.time())}")
 
-# --- 2. ПАРСИНГ KUFAR (АВТО) ---
 def fetch_kufar_cars():
     url = "https://cre-api.kufar.by/ads-search/v1/engine/v1/search/rendered-paginated"
     params = {
@@ -149,7 +142,6 @@ def fetch_kufar_cars():
 
     return found_ads
 
-# --- 3. ФОНОВОЕ СКАНИРОВАНИЕ ---
 def check_kufar_loop():
     logging.info("Сканер автомобилей запущен...")
     seen_ads = set(load_data(SEEN_ADS_FILE, []))
@@ -164,7 +156,6 @@ def check_kufar_loop():
 
     while True:
         subscribers = get_all_subscribers()
-        start_time = get_start_time()
         logging.info(f"=== ЦИКЛ: Подписчиков: {len(subscribers)}. Увиденных: {len(seen_ads)} ===")
 
         try:
@@ -172,10 +163,10 @@ def check_kufar_loop():
             ads = fetch_kufar_cars()
             for ad in ads:
                 ad_id = ad["id"]
-                ad_time = ad.get("list_time", 0)
                 
-                if ad_time <= start_time:
-                    continue
+                # === ПРОВЕРКА ВРЕМЕНИ УБРАНА ДЛЯ ТЕСТА ===
+                # if ad_time <= start_time:
+                #     continue
                 
                 if ad_id in seen_ads:
                     continue
@@ -207,7 +198,6 @@ def check_kufar_loop():
             logging.error(f"Ошибка сканера: {e}")
         time.sleep(CHECK_INTERVAL)
 
-# --- 4. КОМАНДЫ БОТА ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.chat.id
@@ -221,7 +211,6 @@ def send_welcome(message):
     text = (
         f"👋 Здравствуйте, {message.from_user.first_name}!\n\n"
         f"Вы подписались на уведомления о продаже автомобилей по всей Беларуси.\n\n"
-        f"⚠️ ВАЖНО: Вы будете получать только те объявления, которые появятся ПОСЛЕ этой команды.\n\n"
         f"🚗 Категория: Автомобили\n"
         f"💰 Цена: от {MIN_PRICE_BYN} до {MAX_PRICE_BYN} BYN\n"
         f"📍 Регион: вся Беларусь\n"
@@ -260,7 +249,6 @@ def status_info(message):
     )
     bot.reply_to(message, text)
 
-# --- 5. ВЕБХУК ---
 @app.route(f"/{BOT_TOKEN}", methods=['POST'])
 def webhook():
     if request.headers.get('content-type') == 'application/json':
@@ -275,7 +263,6 @@ def webhook():
 def index():
     return "Telegram Bot is active!", 200
 
-# --- 6. ЗАПУСК ---
 if __name__ == "__main__":
     try:
         bot.remove_webhook()
