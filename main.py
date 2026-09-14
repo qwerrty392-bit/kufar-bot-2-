@@ -144,15 +144,16 @@ def fetch_kufar_cars():
 
 def check_kufar_loop():
     logging.info("Сканер автомобилей запущен...")
-    seen_ads = set(load_data(SEEN_ADS_FILE, []))
+    seen_ads = set()  # <-- ВРЕМЕННО ПУСТО, чтобы отправить все объявления
     
-    if len(seen_ads) == 0:
-        logging.info("Первый запуск: запоминаем все текущие объявления об авто...")
-        ads = fetch_kufar_cars()
-        for ad in ads:
-            seen_ads.add(ad["id"])
-        save_data(SEEN_ADS_FILE, list(seen_ads))
-        logging.info(f"Запомнено {len(seen_ads)} объявлений при первом запуске")
+    # Закомментировано, чтобы бот не запоминал объявления при первом запуске
+    # if len(seen_ads) == 0:
+    #     logging.info("Первый запуск: запоминаем все текущие объявления об авто...")
+    #     ads = fetch_kufar_cars()
+    #     for ad in ads:
+    #         seen_ads.add(ad["id"])
+    #     save_data(SEEN_ADS_FILE, list(seen_ads))
+    #     logging.info(f"Запомнено {len(seen_ads)} объявлений при первом запуске")
 
     while True:
         subscribers = get_all_subscribers()
@@ -164,12 +165,9 @@ def check_kufar_loop():
             for ad in ads:
                 ad_id = ad["id"]
                 
-                # === ПРОВЕРКА ВРЕМЕНИ УБРАНА ДЛЯ ТЕСТА ===
-                # if ad_time <= start_time:
+                # === ПРОВЕРКА seen_ads ОТКЛЮЧЕНА ДЛЯ ТЕСТА ===
+                # if ad_id in seen_ads:
                 #     continue
-                
-                if ad_id in seen_ads:
-                    continue
                 
                 seen_ads.add(ad_id)
                 save_data(SEEN_ADS_FILE, list(seen_ads))
