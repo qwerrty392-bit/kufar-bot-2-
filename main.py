@@ -144,16 +144,16 @@ def fetch_kufar_cars():
 
 def check_kufar_loop():
     logging.info("Сканер автомобилей запущен...")
-    seen_ads = set()  # <-- ВРЕМЕННО ПУСТО, чтобы отправить все объявления
+    seen_ads = set(load_data(SEEN_ADS_FILE, []))
     
-    # Закомментировано, чтобы бот не запоминал объявления при первом запуске
-    # if len(seen_ads) == 0:
-    #     logging.info("Первый запуск: запоминаем все текущие объявления об авто...")
-    #     ads = fetch_kufar_cars()
-    #     for ad in ads:
-    #         seen_ads.add(ad["id"])
-    #     save_data(SEEN_ADS_FILE, list(seen_ads))
-    #     logging.info(f"Запомнено {len(seen_ads)} объявлений при первом запуске")
+    # При первом запуске запоминаем ВСЕ текущие объявления, НЕ отправляя их
+    if len(seen_ads) == 0:
+        logging.info("Первый запуск: запоминаем все текущие объявления об авто...")
+        ads = fetch_kufar_cars()
+        for ad in ads:
+            seen_ads.add(ad["id"])
+        save_data(SEEN_ADS_FILE, list(seen_ads))
+        logging.info(f"Запомнено {len(seen_ads)} объявлений при первом запуске")
 
     while True:
         subscribers = get_all_subscribers()
@@ -165,10 +165,11 @@ def check_kufar_loop():
             for ad in ads:
                 ad_id = ad["id"]
                 
-                # === ПРОВЕРКА seen_ads ОТКЛЮЧЕНА ДЛЯ ТЕСТА ===
-                # if ad_id in seen_ads:
-                #     continue
+                # Пропускаем уже увиденные
+                if ad_id in seen_ads:
+                    continue
                 
+                # Отправляем только новые
                 seen_ads.add(ad_id)
                 save_data(SEEN_ADS_FILE, list(seen_ads))
                 logging.info(f"НОВОЕ АВТО: {ad['title']} | {ad['price']} | {ad['region']}")
@@ -209,6 +210,7 @@ def send_welcome(message):
     text = (
         f"👋 Здравствуйте, {message.from_user.first_name}!\n\n"
         f"Вы подписались на уведомления о продаже автомобилей по всей Беларуси.\n\n"
+        f"⚠️ ВАЖНО: Вы будете получать только те объявления, которые появятся ПОСЛЕ этой команды.\n\n"
         f"🚗 Категория: Автомобили\n"
         f"💰 Цена: от {MIN_PRICE_BYN} до {MAX_PRICE_BYN} BYN\n"
         f"📍 Регион: вся Беларусь\n"
