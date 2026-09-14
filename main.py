@@ -12,10 +12,9 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # ============================================================
-# --- ВАШИ TELEGRAM ID (для второго бота) ---
+# --- ВАШ TELEGRAM ID ---
 # ============================================================
 MY_TELEGRAM_ID = 545995986        # <-- Ваш основной ID
-SECOND_TELEGRAM_ID =     # <-- Второй ID
 # ============================================================
 
 # --- КОНФИГУРАЦИЯ ---
@@ -56,7 +55,7 @@ def save_data(filename, data):
         logging.error(f"Ошибка сохранения {filename}: {e}")
 
 def get_all_subscribers():
-    all_subs = {MY_TELEGRAM_ID, SECOND_TELEGRAM_ID}
+    all_subs = {MY_TELEGRAM_ID}
     all_subs.update(set(load_data(USERS_FILE, [])))
     return all_subs
 
